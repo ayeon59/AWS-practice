@@ -18,6 +18,11 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/files', fileRoutes);
 
+// Hello 페이지 (루트)
+app.get('/', (_req, res) => {
+  res.send('Hello! 백엔드 서버가 정상 작동 중입니다 🚀');
+});
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
