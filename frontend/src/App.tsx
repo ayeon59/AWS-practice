@@ -62,18 +62,16 @@ function App() {
               <tr>
                 <th>파일명</th>
                 <th>크기</th>
-                <th>타입</th>
                 <th>링크</th>
               </tr>
             </thead>
             <tbody>
               {files.map((file) => (
                 <tr key={file.key}>
-                  <td>{file.fileName}</td>
+                  <td>{file.originalName}</td>
                   <td>{formatFileSize(file.size)}</td>
-                  <td>{file.fileType}</td>
                   <td>
-                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
+                    <a href={file.location} target="_blank" rel="noopener noreferrer">
                       보기
                     </a>
                   </td>
