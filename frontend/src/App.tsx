@@ -1,39 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import type { FileInfo } from './api/fileApi';
-import { uploadFile, getAllFiles, deleteFile, checkHealth } from './api/fileApi';
+import { uploadFile } from './api/fileApi';
 import './App.css';
 
 function App() {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [serverStatus, setServerStatus] = useState<string>('확인 중...');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    loadFiles();
-    checkServerHealth();
-  }, []);
-
-  const checkServerHealth = async () => {
-    try {
-      const health = await checkHealth();
-      setServerStatus(`연결됨 (${health.timestamp})`);
-    } catch {
-      setServerStatus('연결 실패');
-    }
-  };
-
-  const loadFiles = async () => {
-    try {
-      const fileList = await getAllFiles();
-      setFiles(fileList);
-      setError(null);
-    } catch (err) {
-      setError('파일 목록을 불러오는데 실패했습니다.');
-      console.error(err);
-    }
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,8 +17,8 @@ function App() {
     setError(null);
 
     try {
-      await uploadFile(file);
-      await loadFiles();
+      const uploadedFile = await uploadFile(file);
+      setFiles((prev) => [uploadedFile, ...prev]);
     } catch (err) {
       setError('파일 업로드에 실패했습니다.');
       console.error(err);
@@ -53,18 +27,6 @@ function App() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-
-    try {
-      await deleteFile(id);
-      await loadFiles();
-    } catch (err) {
-      setError('파일 삭제에 실패했습니다.');
-      console.error(err);
     }
   };
 
@@ -77,12 +39,6 @@ function App() {
   return (
     <div className="container">
       <h1>AWS S3 파일 업로드</h1>
-
-      <div className="status">
-        서버 상태: <span className={serverStatus.includes('연결됨') ? 'connected' : 'disconnected'}>
-          {serverStatus}
-        </span>
-      </div>
 
       <div className="upload-section">
         <input
@@ -106,24 +62,20 @@ function App() {
               <tr>
                 <th>파일명</th>
                 <th>크기</th>
-                <th>업로드 일시</th>
-                <th>액션</th>
+                <th>타입</th>
+                <th>링크</th>
               </tr>
             </thead>
             <tbody>
               {files.map((file) => (
-                <tr key={file.id}>
+                <tr key={file.key}>
+                  <td>{file.fileName}</td>
+                  <td>{formatFileSize(file.size)}</td>
+                  <td>{file.fileType}</td>
                   <td>
-                    <a href={file.s3Url} target="_blank" rel="noopener noreferrer">
-                      {file.originalName}
+                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
+                      보기
                     </a>
-                  </td>
-                  <td>{formatFileSize(Number(file.size))}</td>
-                  <td>{new Date(file.createdAt).toLocaleString('ko-KR')}</td>
-                  <td>
-                    <button onClick={() => handleDelete(file.id)} className="delete-btn">
-                      삭제
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -131,10 +83,6 @@ function App() {
           </table>
         )}
       </div>
-
-      <button onClick={loadFiles} className="refresh-btn">
-        새로고침
-      </button>
     </div>
   );
 }
