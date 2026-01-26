@@ -12,14 +12,13 @@ const app = express();
 const PORT = 80;
 
 app.use(cors());
-app.use(express.json());
 
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
+  region: "ap-northeast-2",
 });
 
 const upload = multer({
@@ -27,7 +26,7 @@ const upload = multer({
     s3: s3,
     bucket: process.env.AWS_S3_BUCKET!,
     key: function (req, file, cb) {
-      cb(null, `uploads/${Date.now()}-${file.originalname}`);
+      cb(null, file.originalname);
     },
   }),
 });
@@ -50,18 +49,8 @@ app.get("/health", (req, res) => {
   res.status(200).send("Success Heatlth Check");
 });
 
-// 파일 업로드
-app.post("/api/upload", upload.single("file"), (req, res) => {
-  const file = req.file as Express.MulterS3.File;
-  res.json({
-    message: "업로드 성공",
-    file: {
-      key: file.key,
-      location: file.location,
-      originalName: file.originalname,
-      size: file.size,
-    },
-  });
+app.post("/upload", upload.array("photos"), (req, res) => {
+  res.send(req.files);
 });
 
 app.listen(PORT, async () => {

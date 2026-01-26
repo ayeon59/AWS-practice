@@ -1,15 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export interface FileInfo {
-  key: string;
-  location: string;
-  originalName: string;
-  size: number;
-}
-
-export const uploadFile = async (file: File): Promise<FileInfo> => {
+export const uploadFile = async (file: File) => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('photos', file);
 
   const response = await fetch(`${API_URL}/upload`, {
     method: 'POST',
@@ -20,6 +13,5 @@ export const uploadFile = async (file: File): Promise<FileInfo> => {
     throw new Error('파일 업로드에 실패했습니다.');
   }
 
-  const data = await response.json();
-  return data.file;
+  return response.json();
 };
